@@ -4,7 +4,7 @@ use Moose;
 
 use AnyEvent::ZeroMQ;
 use AnyEvent::ZeroMQ::Types qw(IdentityStr);
-use ZeroMQ::Raw::Constants qw(ZMQ_NOBLOCK ZMQ_IDENTITY);
+use AnyEvent::ZeroMQ::Raw::Constants qw(ZMQ_NOBLOCK ZMQ_IDENTITY);
 
 use Params::Util qw(_CODELIKE);
 use Scalar::Util qw(weaken);
@@ -16,7 +16,7 @@ use namespace::autoclean;
 
 has 'socket' => (
     is       => 'ro',
-    isa      => 'ZeroMQ::Raw::Socket',
+    isa      => 'AnyEvent::ZeroMQ::Raw::Socket',
     handles  => [qw/bind connect/],
     required => 1,
 );
@@ -129,7 +129,7 @@ sub _read_once {
     my ($self, $cb) = @_;
     local $! = 0;
     try {
-        my $msg = ZeroMQ::Raw::Message->new;
+        my $msg = AnyEvent::ZeroMQ::Raw::Message->new;
         $self->socket->recv($msg, ZMQ_NOBLOCK);
         $cb->($self, $msg->data);
     }
@@ -189,9 +189,9 @@ sub build_message {
 
     return $msg
         if ref $msg && blessed $msg &&
-            $msg->isa('ZeroMQ::Raw::Message');
+            $msg->isa('AnyEvent::ZeroMQ::Raw::Message');
 
-    return ZeroMQ::Raw::Message->new_from_scalar($msg)
+    return AnyEvent::ZeroMQ::Raw::Message->new_from_scalar($msg)
         if defined $msg;
 
     return;
@@ -237,11 +237,11 @@ sub write {
 sub push_write {
     my ($self, $msg) = @_;
 
-    if(_CODELIKE($msg) || blessed $msg && $msg->isa('ZeroMQ::Raw::Message')){
+    if(_CODELIKE($msg) || blessed $msg && $msg->isa('AnyEvent::ZeroMQ::Raw::Message')){
         push @{$self->write_buffer}, $msg;
     }
     else {
-        push @{$self->write_buffer}, ZeroMQ::Raw::Message->new_from_scalar($msg);
+        push @{$self->write_buffer}, AnyEvent::ZeroMQ::Raw::Message->new_from_scalar($msg);
     }
     $self->write;
 }
